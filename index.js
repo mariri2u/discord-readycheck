@@ -1,3 +1,4 @@
+const { RealmsAPI } = require('./realms')
 require('dotenv').config()
 const discord = require('discord.js')
 const config = require('./config.json')
@@ -48,6 +49,17 @@ client.on('message', async msg => {
     }
   } else if (msg.content === '.reload') {
     reload()
+  } else if (msg.content.match(/^.join/g)) {
+    const match_obj = msg.content.match(/^.join\s(?<name>.+)/)
+    const name = match_obj.groups.name
+    const realms = new RealmsAPI()
+    const res = await realms.postInvite(name)
+      .catch(err => undefined)
+    if (res) {
+      msg.reply('招待しました')
+    } else {
+      msg.reply('招待できませんでした')
+    }
   }
 })
 
@@ -58,14 +70,14 @@ client.on('messageReactionAdd', async (reaction, user) => {
     const fields = embed.fields
     let exist = false
     for (const field of fields) {
-      if (field.value.indexOf(user.username) !== -1) {
+      if (field.value.indexOf(user.id) !== -1) {
         exist = true
         if (reaction.emoji.name === NG) {
           field.name = 'NG'
-          field.value = `${NG}${user.username}`
+          field.value = `${NG}${user}`
         } else {
           field.name = 'Ready'
-          field.value = `<:${reaction.emoji.name}:${reaction.emoji.id}>${user.username}`
+          field.value = `${reaction.emoji}${user}`
         }
       }
     }
@@ -73,13 +85,13 @@ client.on('messageReactionAdd', async (reaction, user) => {
       if (reaction.emoji.name === NG) {
         fields.push({
           name: 'NG',
-          value: `<:${NG}}>${user.username}`,
+          value: user,
           inline: true
-        })  
+        })
       } else {
         fields.push({
           name: 'Ready',
-          value: `<:${reaction.emoji.name}:${reaction.emoji.id}>${user.username}`,
+          value: `${reaction.emoji}${user}`,
           inline: true
         })  
       }
